@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+_show_help() {
+    echo -e "view — write highlighted text to STDOUT.\nOptions:
+    \t-l --less \tsend output to less -R
+    \t-n --lines\tless, but shows line nums (less -RN)
+    \t-h --help \tshow this help message and exit."
+    exit 0
+}
+
+_highlight_is_not_installed() { echo -e "'highlight' is not installed" && exit 1; }
+
+_no_such_file() { echo "view: $1: No such file" && exit 1; }
+
+_view() {
+    ext='sh'
+    case "$1" in
+        *.awk)                 ext='awk';;
+        *.c|*h)                ext='c';;
+        *.conf|*htaccess)      ext='conf';;
+        *.css)                 ext='css';;
+        *.docker|Dockerfile)   ext='docker';;
+        *email)                ext='email';;
+        *.go)                  ext='go';;
+        *.js)                  ext='js';;
+        *.json)                ext='json';;
+        *.md)                  ext='md';;
+        *.ru|*.icu|*.vhost)    ext='nginx';;
+        *.perl|pl)             ext='perl';;
+        *.php)                 ext='php';;
+        *.py)                  ext='python';;
+        Gemfile|Rakefile|*.rb) ext='ruby';;
+        *.sql|*.psql)          ext='sql';;
+        *.tex)                 ext='tex';;
+        *.txt)                 ext='txt';;
+        *.xml)                 ext='xml';;
+        *.yml)                 ext='yml';;
+        *)                     ext='sh';;
+    esac
+    cat "${1:-/dev/stdin}" | highlight -O ansi -S "$ext"
+}
+
+[ $(which highlight) ] || _highlight_is_not_installed
+
+while (( "$#" )); do
+    case $1 in
+        -h|--help) _show_help;;
+        -l|--less) LESS_R=1;;
+        -n|-ln|-nl|--lines) LESS_RN=1;;
+        *) if [ -f "$1" ]; then INPUT_FILE="$1"; else _no_such_file "$1"; fi;;
+    esac
+    shift
+done
+
+[[ "$LESS_R" == 1 ]] && _view "$INPUT_FILE" | less -R
+[[ "$LESS_RN" == 1 ]] && _view "$INPUT_FILE" | less -RN
+[[ "$LESS_R" && "$LESS_RN" ]] || _view "$INPUT_FILE"
