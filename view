@@ -8,9 +8,13 @@ _show_help() {
     exit 0
 }
 
-_highlight_is_not_installed() { echo -e "'highlight' is not installed" && exit 1; }
+_highlight_is_not_installed() {
+    echo -e "'highlight' is not installed" && exit 1
+}
 
-_no_such_file() { echo "view: $1: No such file" && exit 1; }
+_no_such_file() {
+    echo "view: $1: No such file" && exit 1
+}
 
 _view() {
     ext='sh'
@@ -41,15 +45,16 @@ _view() {
 }
 
 [ $(which highlight) ] || _highlight_is_not_installed
+[[ -t 0 && -z "$1" ]] && _show_help  # Do nothing if no arguments provided and no STDIN
 
 LESS_R=0
 LESS_RN=0
 
 while (( "$#" )); do
     case $1 in
-        -h|--help) _show_help;;
         -l|--less) LESS_R=1;;
         -n|-ln|-nl|--lines) LESS_RN=1;;
+        -h|--help) _show_help;;
         *) if [ -f "$1" ]; then INPUT_FILE="$1"; else _no_such_file "$1"; fi;;
     esac
     shift

@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+PRINT_LOG=1
+LOG_FILE=logfile
+TIME_FORMAT="%d %b %Y %T %z"
+LOG_FORMAT="%time - %log"
+REMOVE_COLORS=0
+
+_show_help() {
+cat << EOF
+prntl — print formatted log to STDOUT and log file.
+Use '--no-print' option to write to log file only.
+
+Usage: prntl [OPTION]... < [FILE]
+Options:
+    -o, --output        set log file. 'logfile' by default
+    -f, --log-format    set log format. Formatting options:
+                            %time   time; see --time-format
+                            %log    log's string
+                            Example: prntl -f 'mylog %time : %log'
+    -t, --time-format   set time format; see 'date --help'
+                        or 'man date' for details.
+                        Example: prntl -t '%D %T'
+    -c, --no-color      remove ANSI color codes from log string
+    -p, --no-print      don't print log to STDOUT
+    -h, --help          show this help message and exit.
+EOF
+exit 0
+}
+
+_unknown_option() {
+    echo -e "prntl: $1: Unknown option\nSee 'prntl --help'." && exit 1
+}
+
+_log_formatter() {
+    ESCAPED_LOG_LINE="$(printf '%s\n' "$2" | sed -e 's/[\/&]/\\&/g')"
+    [[ "$REMOVE_COLORS" == 1 ]] && \
+    ESCAPED_LOG_LINE="$(echo $ESCAPED_LOG_LINE | sed 's/\x1b\[[^\x1b]*m//g')"
+    echo "$1" | sed -e "s/%time/$(date +"$TIME_FORMAT")/g; s/%log/$ESCAPED_LOG_LINE/g"
+}
+
+_print_log() {
+    while IFS= read -r LOG_LINE
+    do
+        [[ "$PRINT_LOG" == 1 ]] && \
+        _log_formatter "$LOG_FORMAT" "$LOG_LINE" | tee -a "$LOG_FILE" || \
+        _log_formatter "$LOG_FORMAT" "$LOG_LINE" >> "$LOG_FILE"
+    done < "${1:-/dev/stdin}"
+}
+
+while (( "$#" ))
+do
+    case "$1" in
+        -o|--output) LOG_FILE="$2"; shift;;
+        -f|--log-format) LOG_FORMAT="$2"; shift;;
+        -t|--time-format) TIME_FORMAT="$2"; shift;;
+        -c|--no-color) REMOVE_COLORS=1;;
+        -p|--no-print) PRINT_LOG=0;;
+        -h|--help) _show_help;;
+        *) _unknown_option "$1";;
+    esac
+    shift
+done
+
+[ ! -t 0 ] && _print_log || _show_help

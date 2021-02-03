@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#########################################################
+#
+# rng - ranges expander
+#
+# Based on Kusalananda's answer to question:
+# https://superuser.com/questions/353496/
+#
+#########################################################
+
+
+if [[ "$1" && "$(echo "$1" | awk '/[0-9]{1,}\-[0-9]{1,}/')" ]]
+then
+    echo "$1" | awk 'BEGIN { RS=","; FS="-"; ORS="" }
+    NR > 1 { print "\n" }
+    NF > 1 { for (i=$1; i<$2; ++i) { print i "\n" } print $2; next }
+    { print $1 }'
+else
+    cat <<EOF
+rng - ranges expander.
+
+This script expands expressions like "1-10" into a number series.
+The resulting row can be used in conjunction with the xargs or
+something else.
+
+Example: rng 1-4,7,9-12
+EOF
+fi
