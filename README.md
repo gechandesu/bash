@@ -4,25 +4,25 @@
 
 I recomend install scripts into the home directory. Place they into `~/.local/bin`. If you don't have it, create it:
 
-```
+```bash
 mkdir -p ~/.local/bin
 ```
 
 Give executing rights for scripts:
 
-```
+```bash
 chmod +x <script_name>
 ```
 
 Check your 'PATH' variable:
 
-```
+```bash
 echo $PATH
 ```
 
 If you don't find `/home/your_username/.local/bin` run:
 
-```
+```bash
 echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc
 source ~/.bashrc
 ```
@@ -56,7 +56,7 @@ Options:
 
 Usage:
 
-```
+```bash
 $ echo 'some log string' | prntl -o /dev/null -f 'BACKUP: %time : %log'
 BACKUP: 03 Feb 2021 20:47:03 +0300 : some log string
 ```
@@ -73,7 +73,7 @@ Options:
 
 Script depends on **highlight** package ([link](http://www.andre-simon.de/)):
 
-```
+```bash
 sudo apt install highlight
 ```
 
@@ -91,7 +91,7 @@ Example: rng 1-4,7,9-12
 
 Use case:
 
-```
+```bash
 $ rng 1-4,8,13 | xargs -I {} echo file_{}
 file_1
 file_2
