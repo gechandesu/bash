@@ -33,19 +33,23 @@ _unknown_option() {
 }
 
 _log_formatter() {
-    ESCAPED_LOG_LINE="$(printf '%s\n' "$2" | sed -e 's/[\/&]/\\&/g')"
-    [[ "$REMOVE_COLORS" == 1 ]] && \
-    ESCAPED_LOG_LINE="$(echo $ESCAPED_LOG_LINE | sed 's/\x1b\[[^\x1b]*m//g')"
-    echo "$1" | sed -e "s/%time/$(date +"$TIME_FORMAT")/g; s/%log/$ESCAPED_LOG_LINE/g"
+    echo "$1" | sed -e "s/%time/$(date +"$TIME_FORMAT")/g; s/%log/$2/g"
 }
 
 _print_log() {
+    LOG_MESSAGE="$(cat <&0)"
+
+    ESCAPED_LOG_MESSAGE="$(printf '%s\n' "$LOG_MESSAGE" | sed -e 's/[\/&]/\\&/g')"
+
+    [[ "$REMOVE_COLORS" == 1 ]] && \
+    ESCAPED_LOG_MESSAGE="$(echo "$ESCAPED_LOG_MESSAGE" | sed 's/\x1b\[[^\x1b]*m//g')"
+
     while IFS= read -r LOG_LINE
     do
         [[ "$PRINT_LOG" == 1 ]] && \
         _log_formatter "$LOG_FORMAT" "$LOG_LINE" | tee -a "$LOG_FILE" || \
         _log_formatter "$LOG_FORMAT" "$LOG_LINE" >> "$LOG_FILE"
-    done < "${1:-/dev/stdin}"
+    done <<< "$ESCAPED_LOG_MESSAGE"
 }
 
 while (( "$#" ))
