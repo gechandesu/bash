@@ -114,8 +114,8 @@ Options:
 Example:
 
 ```bash
-$ echo 'my us$escaped \sstring --foo' | esc -o
--- my\ us\$escaped\ \\sstring\ --foo
+$ echo 'my un$escaped \sstring --foo' | esc -o
+-- my\ un\$escaped\ \\sstring\ --foo
 ```
 
 ## view

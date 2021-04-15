@@ -36,7 +36,7 @@ do
     case "$1" in
         -o|--opts) EOF_OPTS='-- ';;
         -h|--help) escape_print_help;;
-        -*|--*) echo "$0: Unknown option: $1" &>2; exit 1;;
+        -*|--*) echo "$0: Unknown option: $1" >&2; exit 1;;
         *) ARGS="$ARGS $1";;
     esac
     shift
