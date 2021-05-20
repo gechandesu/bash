@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+http_version=0.5 # this script version.
+
 set -o monitor   # for job control.
 set -o errexit   # exit if error occurs.
 
@@ -23,20 +25,19 @@ http_print_help() {
 cat <<EOF
 Run Python 3 builtin HTTP Server.
 
-Usage:
-    http [OPTIONS]... [ARGS]...
+Usage: http [-v | --version] [-h, | --help] [-c | --cgi] [-f | --firefox]
+            [<host>[:<port>]] [<port>] [<dir>]
 
 Options:
-    --cgi, cgi      run as CGI Server.
-    -f, f           run Firefox.
-    --help, help    print this message and exit.
+    -c, --cgi       run as CGI Server.
+    -f, --firefox   open URL in Firefox.
+    -h, --help      print this help message and exit.
+    -v, --version   print version and exit.
 
-Optional arguments:
-    HOST            host to bind. Default: 0.0.0.0
-    PORT            port to bind. Default: 8000
-    DIR             directory to serve. Default: cwd.
-
-Also HOST:PORT syntax is allowed.
+Arguments:
+    <host>          host to bind. Default: 0.0.0.0
+    <port>          port to bind. Default: 8000
+    <dir>           directory to serve. Default: current directory.
 EOF
 exit 0
 }
@@ -44,12 +45,14 @@ exit 0
 while (( "$#" ))
 do
     case "$1" in
-        -c|c|--cgi|cgi)
+        -c|--cgi)
             CGI='--cgi';;
-        -f|f|ff|--firefox|firefox)
+        -f|--firefox)
             FOX=1;;
-        -h|h|--help|help)
+        -h|--help)
             http_print_help;;
+        -v|--version)
+            echo "http v$http_version"; exit 0;;
         -*|--*)
             echo -e "${R}$0: Error: Bad option: $1${N}" >&2
             exit 1
@@ -78,7 +81,7 @@ do
                 HOST="$(echo "$1" | cut -d ":" -f 1)"
                 PORT="$(echo "$1" | cut -d ":" -f 2)"
             else
-                echo -e "${R}$0: Error: Bad option: $1${N}" >&2
+                echo -e "$0: Bad option: $1$" >&2
                 exit 1
             fi
             ;;
@@ -92,7 +95,7 @@ while [ "$(ss -tanp | grep -o "$PORT")" ]
 do
     if [[ "$retries" == 4 ]]
     then
-        echo -e "${R}Max number of retries reached! Exiting.${N}" >&2
+        echo -e "Max number of retries reached! Exiting." >&2
         exit 1
     else
         :
@@ -101,14 +104,14 @@ do
     # Increase port if is already in use.
     PORT_USED="$PORT"
     let PORT++
-    echo -e "${R}Port $PORT_USED is already in use!${N}
+    echo -e "Port $PORT_USED is already in use!
         Switching to: $PORT" | sed 's/^ *//g' >&2
 
     let retries++
 done
 
 # Run Python http.server.
-echo -e "Serve: $DIR\t${Y}Press ^C to stop serving.${N}"
+echo -e "Serve: $DIR\tPress ^C to stop serving."
 python3 -m http.server $CGI --bind $HOST $PORT --directory $DIR &
 [[ "$FOX" == 1 ]] && firefox http://$HOST:$PORT/
 fg

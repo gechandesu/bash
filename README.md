@@ -37,20 +37,19 @@ Python 3 http.server runner.
 ```
 Run Python 3 builtin HTTP Server.
 
-Usage:
-    http [OPTIONS]... [ARGS]...
+Usage: http [-v | --version] [-h, | --help] [-c | --cgi] [-f | --firefox]
+            [<host>[:<port>]] [<port>] [<dir>]
 
 Options:
-    --cgi, cgi      run as CGI Server.
-    -f, f           run Firefox.
-    --help, help    print this message and exit.
+    -c, --cgi       run as CGI Server.
+    -f, --firefox   open URL in Firefox.
+    -h, --help      print this help message and exit.
+    -v, --version   print version and exit.
 
-Optional arguments:
-    HOST            host to bind. Default: 0.0.0.0
-    PORT            port to bind. Default: 8000
-    DIR             directory to serve. Default: cwd.
-
-Also HOST:PORT syntax is allowed.
+Arguments:
+    <host>          host to bind. Default: 0.0.0.0
+    <port>          port to bind. Default: 8000
+    <dir>           directory to serve. Default: current directory.
 ```
 
 Examples:
@@ -69,21 +68,22 @@ Print log. Simple logging tool.
 ```
 Print formatted log to STDOUT and log file.
 
-Usage:
-    prntl [OPTIONS]... [ARGUMENTS]...
+Usage: prntl [-v| --version] [-h | --help] [-o | --output=<file>]
+             [-f | --log-format=<string>] [-t | --time-format=<string>]
+             [-p | --no-print] [-c | --no-color]
 
 Options:
-    -o, --output        set log file name. Default: printl.log.
-    -f, --log-format    set log format. Formatting options:
-                            %time   time; see '--time-format'.
-                            %log    log string.
-                        Example: prntl -f 'mylog %time : %log'
-    -t, --time-format   set time format; see 'date --help'
-                        or 'man date' for details.
-                        Example: prntl -t '%D %T'
-    -c, --no-color      remove ANSI color codes from log string.
-    -p, --no-print      don't print log to STDOUT.
-    -h, --help          show this help message and exit.
+    -o, --output=<file>         set log file name. Default: prntl.log.
+    -f, --log-format=<string>   set log format. Formatting options:
+        %time   time; see '--time-format'. Default: %d %b %Y %T %z
+        %log    log string. Default: %time - %log
+    -t, --time-format=<string>  set time format; see 'date --help'
+                                or 'man date' for details.
+                                Example: prntl -t '%D %T'
+    -c, --no-color              remove ANSI color codes from log string.
+    -p, --no-print              don't print log to STDOUT.
+    -h, --help                  print this help message and exit.
+    -v, --version               print version and exit.
 ```
 
 Usage:
@@ -99,13 +99,13 @@ BACKUP: 03 Feb 2021 20:47:03 +0300 : some log string
 Escape whitespaces and specail characters in string.
 Uses 'printf %q'. Read more in 'man printf'.
 
-Usage:
-    esc [OPTIONS]... [ARGS]...
+Usage: esc [-h | --help] [-o | --opts] [<string>...]
 
 Options:
     -o, --opts      add end of the options sign (double dash). See
                     SHELL BUILTIN COMMANDS in 'man bash' for more info.
-    -h, --help      print this message and exit.
+    -h, --help      print this help message and exit.
+    -v, --version   print version and exit.
 ```
 
 Example:
@@ -120,13 +120,14 @@ $ echo 'my un$escaped \sstring --foo' | esc -o
 ```
 Print highlighted text to STDOUT.
 
-Usage:
-    view [-l] [-n] [<file>]
+Usage: view [-v | version] [-h | --help] [-l | --less] [-n | --lines]
+            [<file>]
 
 Options:
-    -l          send output to 'less -R'.
-    -n          similar to -l, but shows line nums (less -RN).
-    --help      show this help message and exit.
+    -l, --less      send output to 'less -R'.
+    -n, --lines     similar to -l, but shows line nums (less -RN).
+    -h, --help      print this help message and exit.
+    -v, --version   print version and exit.
 ```
 
 Script depends on **highlight** package ([link](http://www.andre-simon.de/)):
@@ -138,18 +139,15 @@ $ sudo apt install highlight
 ## rng
 
 ```
-Expand ranges like "1-10" into a number series.
+Expand ranges like "1-4,7,9-12" into a number series.
 
-Usage:
-    rng [OPTIONS]... [ARGUMENTS]...
+Usage: rng [-v | --version] [-h | --help] [-d <value>] [-l <value>]
+           [-D | --delimiter=<value>] [<string>]
 
 Options:
-    -d        digits delimiter. Default: '\n'.
-    -l        lines delimiter. Default: '\n'.
-    -D        Set same delimiters for digits and lines.
-    --help    print this help message and exit.
-
-Example:
-   $ rng 1-4,7,9-12 -D ' '
-   1 2 3 4 7 9 10 11 12
+    -d <value>               digits delimiter. Default: '\n'.
+    -l <value>               lines delimiter. Default: '\n'.
+    -D, --delimiter=<value>  Set same delimiters for digits and lines.
+    -h, --help               print this help message and exit.
+    -v, --version            print version and exit.
 ```

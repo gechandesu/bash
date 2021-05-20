@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+view_version=0.6.1
+
 if ! hash highlight 2>/dev/null
 then
     echo "$0: highlight executable not found." >&2 && exit 1
@@ -9,12 +11,14 @@ view_print_help() {
 cat << EOF
 Print highlighted text to STDOUT.
 
-Usage: view [-h | --help] [-l | --less] [-n | --lines] [<file>]
+Usage: view [-v | version] [-h | --help] [-l | --less] [-n | --lines]
+            [<file>]
 
 Options:
     -l, --less      send output to 'less -R'.
     -n, --lines     similar to -l, but shows line nums (less -RN).
-    -h, --help      show this help message and exit.
+    -h, --help      print this help message and exit.
+    -v, --version   print version and exit.
 EOF
 exit 0
 }
@@ -34,6 +38,8 @@ while (( "$#" )); do
     case $1 in
         -h|--help)
             view_print_help;;
+        -v|--version)
+            echo "view v$view_version"; exit 0;;
         -*)
             for i in $(seq 2 ${#1}); do opts+=("-${1:i-1:1}"); done
 

@@ -7,42 +7,59 @@
 #
 ####################################################
 
+rng_version=0.4
+
 # Default delimiters.
 DEL='\n'
 LDEL='\n'
 
 rng_print_help() {
 cat <<EOF
-Expand ranges like "1-10" into a number series.
+Expand ranges like "1-4,7,9-12" into a number series.
 
-Usage:
-    rng [OPTIONS]... [ARGUMENTS]...
+Usage: rng [-v | --version] [-h | --help] [-d <value>] [-l <value>]
+           [-D | --delimiter=<value>] [<string>]
 
 Options:
-    -d        digits delimiter. Default: '\n'.
-    -l        lines delimiter. Default: '\n'.
-    -D        Set same delimiters for digits and lines.
-    --help    print this help message and exit.
-
-Example:
-   $ rng 1-4,7,9-12 -D ' '
-   1 2 3 4 7 9 10 11 12
+    -d <value>               digits delimiter. Default: '\n'.
+    -l <value>               lines delimiter. Default: '\n'.
+    -D, --delimiter=<value>  Set same delimiters for digits and lines.
+    -h, --help               print this help message and exit.
+    -v, --version            print version and exit.
 EOF
 exit 0
 }
 
-rng_expand() {
-    if [ "$1" ]
+rng_get_optarg() {
+    if [[ "$1" =~ .+=.+ ]]; then
+        opt="${1%%=*}"; arg="${1#*=}"; sft=1
+    elif [[ ! "$1" =~ .+=$ ]] && \
+         [ "$2" ] && [ "${2:0:1}" != '-' ]
     then
-        STR="$1"
+        opt="$1"; arg="$2"; sft=2
     else
-        STR="$(cat <&0)"
+        opt="$1"
+        if [[ "$1" =~ .+=$ ]]; then opt="${1:0: -1}"; fi
+        echo "$0: Missing argument for: $opt" >&2
+        exit 1
     fi
+}
 
+rng_validate() {
+    if [ $(awk '/([0-9]{1,}\-[0-9]{1,})|([0-9]{1,})/' <<< "$1") ] \
+    && [ ! $(awk '/[a-zA-Z*?.+&^%$#@!/\\=><~:\[\]\(\)]/' <<< "$1") ]
+    then
+        return 0
+    else
+        return 1
+    fi
+}
+
+rng_expand() {
     awk -v del="$DEL" -v ldel="$LDEL" 'BEGIN { RS=","; FS="-"; ORS="" }
     NR > 1 { print ldel }
     NF > 1 { for (i=$1; i<$2; ++i) { print i del } print $2; next }
-    { print $1 }' <<< "${STR:0:-1}"  # Cut trailing comma.
+    { print $1 }' <<< "${1:0:-1}"  # Cut trailing comma.
 }
 
 [[ ! "$@" ]] && [ -t 0 ] && rng_print_help
@@ -51,49 +68,30 @@ while (( "$#" ))
 do
     case "$1" in
         -d)
-            if [ "$2" ] && [ "${2:0:1}" != '-' ]
-            then
-                DEL="$2"
-                shift
-            else
-                echo "$0: Missing argument for $1" >&2
-                exit 1
-            fi
-            shift
-            ;;
+            rng_get_optarg "$1" "$2"
+            DEL="$arg"
+            shift "$sft";;
         -l)
-            if [ "$2" ] && [ "${2:0:1}" != '-' ]
-            then
-                LDEL="$2"
-                shift
-            else
-                echo "$0: Missing argument for $1" >&2
-                exit 1
-            fi
-            shift
-            ;;
-        -D)
-            if [ "$2" ] && [ "${2:0:1}" != '-' ]
-            then
-                DEL="$2"
-                LDEL="$2"
-                shift
-            else
-                echo "$0: Missing argument for $1" >&2
-                exit 1
-            fi
-            shift
-            ;;
-        --help)
-            rng_print_help
-            ;;
+            rng_get_optarg "$1" "$2"
+            LDEL="$arg"
+            shift "$sft";;
+        -D|--delimiter|--delimiter=*)
+            rng_get_optarg "$1" "$2"
+            DEL="$arg"; LDEL="$arg"
+            shift "$sft";;
+        -h|--help)
+            rng_print_help;;
+        -v|--version)
+            echo "rng v$rng_version"; exit 0;;
+        -*)
+            echo "$0: Bad option: $1" >&2; exit 1;;
         *)
-            if [ $(awk '/([0-9]{1,}\-[0-9]{1,})|([0-9]{1,})/' <<< "$1") ] \
-            && [ ! $(awk '/[a-zA-Z*?.+&^%$#@!/\\=><~:\[\]\(\)]/' <<< "$1") ]
-            then
+            #if [ $(awk '/([0-9]{1,}\-[0-9]{1,})|([0-9]{1,})/' <<< "$1") ] \
+            #&& [ ! $(awk '/[a-zA-Z*?.+&^%$#@!/\\=><~:\[\]\(\)]/' <<< "$1") ]
+            if rng_validate "$1"; then
                 ARGS+="$1,"
             else
-                echo "$0: Bad argument: $1" >&2
+                echo -n "$0: Bad argument: $1: " >&2
                 echo 'The argument can contain only digits and -,' >&2
                 exit 1
             fi
@@ -101,5 +99,19 @@ do
             ;;
     esac
 done
+
+if [ ! "$ARGS" ]; then
+    ALL_ARGS="$(cat ${1:-/dev/stdin})"
+    for arg in $ALL_ARGS
+    do
+        if rng_validate "$arg"; then
+            ARGS+="$arg,"
+        else
+            echo -n "$0: Bad argument: $1: " >&2
+            echo 'The argument can contain only digits and -,' >&2
+            exit 1
+        fi
+    done
+fi
 
 rng_expand "$ARGS"

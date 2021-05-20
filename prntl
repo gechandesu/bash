@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+prntl_version=0.4
+
 LOG_FILE=prntl.log
 TIME_FORMAT='%d %b %Y %T %z'
 LOG_FORMAT='%time - %log'
@@ -8,23 +10,39 @@ prntl_print_help() {
 cat << EOF
 Print formatted log to STDOUT and log file.
 
-Usage:
-    prntl [OPTIONS]... [ARGUMENTS]...
+Usage: prntl [-v| --version] [-h | --help] [-o | --output=<file>]
+             [-f | --log-format=<string>] [-t | --time-format=<string>]
+             [-p | --no-print] [-c | --no-color]
 
 Options:
-    -o, --output        set log file name. Default: printl.log.
-    -f, --log-format    set log format. Formatting options:
-                            %time   time; see '--time-format'.
-                            %log    log string.
-                        Example: prntl -f 'mylog %time : %log'
-    -t, --time-format   set time format; see 'date --help'
-                        or 'man date' for details.
-                        Example: prntl -t '%D %T'
-    -c, --no-color      remove ANSI color codes from log string.
-    -p, --no-print      don't print log to STDOUT.
-    -h, --help          show this help message and exit.
+    -o, --output=<file>         set log file name. Default: $LOG_FILE.
+    -f, --log-format=<string>   set log format. Formatting options:
+        %time   time; see '--time-format'. Default: $TIME_FORMAT
+        %log    log string. Default: $LOG_FORMAT
+    -t, --time-format=<string>  set time format; see 'date --help'
+                                or 'man date' for details.
+                                Example: prntl -t '%D %T'
+    -c, --no-color              remove ANSI color codes from log string.
+    -p, --no-print              don't print log to STDOUT.
+    -h, --help                  print this help message and exit.
+    -v, --version               print version and exit.
 EOF
 exit 0
+}
+
+prntl_get_optarg() {
+    if [[ "$1" =~ .+=.+ ]]; then
+        opt="${1%%=*}"; arg="${1#*=}"; sft=1
+    elif [[ ! "$1" =~ .+=$ ]] && \
+         [ "$2" ] && [ "${2:0:1}" != '-' ]
+    then
+        opt="$1"; arg="$2"; sft=2
+    else
+        opt="$1"
+        if [[ "$1" =~ .+=$ ]]; then opt="${1:0: -1}"; fi
+        echo "$0: Missing argument for: $opt" >&2
+        exit 1
+    fi
 }
 
 prntl_log_formatter() {
@@ -64,58 +82,34 @@ fi
 while (( "$#" ))
 do
     case "$1" in
-        -o|--output)
-            if [ "$2" ] && [ ${2:0:1} != '-' ]
-            then
-                LOG_FILE="$2"
-                shift
-            else
-                echo "$0: Missing argument for $1" >&2
-                exit 1
-            fi
-            shift
-            ;;
-        -f|--log-format)
-            if [ "$2" ] && [ ${2:0:1} != '-' ]
-            then
-                LOG_FORMAT="$2"
-                shift
-            else
-                echo "$0: Missing argument for $1" >&2
-                exit 1
-            fi
-            shift
-            ;;
-        -t|--time-format)
-            if [ "$2" ] && [ ${2:0:1} != '-' ]
-            then
-                TIME_FORMAT="$2"
-                shift
-            else
-                echo "$0: Missing argument for $1" >&2
-                exit 1
-            fi
-            shift
-            ;;
+        -o|--output|--output=*)
+            prntl_get_optarg "$1" "$2"
+            LOG_FILE="$arg"
+            shift "$sft";;
+        -f|--log-format|--log-format=*)
+            prntl_get_optarg "$1" "$2"
+            LOG_FORMAT="$arg"
+            shift "$sft";;
+        -t|--time-format|--time-format=*)
+            prntl_get_optarg "$1" "$2"
+            TIME_FORMAT="$arg"
+            shift "$sft";;
         -c|--no-color)
             REMOVE_COLORS=1
-            shift
-            ;;
+            shift;;
         -p|--no-print)
             NO_PRINT=1
-            shift
-            ;;
+            shift;;
         -h|--help)
-            prntl_print_help
-            ;;
+            prntl_print_help;;
+        -v|--version)
+            echo "prntl v$prntl_version"; exit 0;;
         -*)
             echo -e "$0: Unknown option: $1\nSee 'prntl --help'." >&2
-            exit 1
-            ;;
+            exit 1;;
         *)
             LOG+="$1 "
-            shift
-            ;;
+            shift;;
     esac
 done
 
