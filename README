@@ -11,19 +11,19 @@ Installation
 
 I recomend install scripts into the home directory. Place they into `~/.local/bin`. If you don't have it, create it:
 
-    $ mkdir -p ~/.local/bin
+$ mkdir -p ~/.local/bin
 
 Give executing rights for scripts:
 
-    $ chmod +x <script_name>
+$ chmod +x <script_name>
 
 Check your PATH variable:
 
-    $ echo $PATH
+$ echo $PATH
 
 If you don't find `/home/your_username/.local/bin` run:
 
-    $ echo 'export PATH+=:$HOME/.local/bin' >> ~/.bashrc && source ~/.bashrc
+$ echo 'export PATH+=:$HOME/.local/bin' >> ~/.bashrc && source ~/.bashrc
 
 Done. Run `<script_name> --help` for check.
 
@@ -38,7 +38,9 @@ yad         Download file from Yandex.Disk storage.
 
 md2man      Convert Markdown to roff. Pandoc wrapper.
 
-prntl       Print log. Simple logging tool.
+prntl       Print formatted log. Simple logging tool.
+
+log         Logs viewing tool. Prints log to STDOUT.
 
 esc         Escape whitespaces and specail characters in string.
 

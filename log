@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Simple log viewing tool.
+log_version=0.1
+
+nginx_logs=/var/log/nginx
+exim4_logs=/var/log/exim4
+
+print_help() {
+cat << EOF
+Print logs to STDOUT.
+
+Usage: log [--version] [-h | --help] [-t <num> | -<num>]
+           [-f | --tailf] <log>
+
+Options:
+    -t [<num>], -<num>  use tail with 'num' lines.
+    -f, --tailf         use 'tail -f'.
+    -h, --help          print this message and exit.
+    --version           print version and exit.
+
+Available logs (<log>):
+    na      nginx access logs ($nginx_logs)
+    ne      nginx error logs ($nginx_logs)
+    ex      exim4 logs ($exim4_logs)
+
+EOF
+exit 0
+}
+
+print_log() {
+    # Print logs to STDPUT with cat or zcat.
+
+    logfiles="$(sort -Vr <<< "$1")"
+
+    for logfile in $logfiles
+    do
+        echo "* File: $logfile"
+        if [[ "$(file --mime-type -b $logfile)" == application/gzip ]]
+            then catzcat=zcat
+            else catzcat=cat
+        fi
+
+        "$catzcat" "$logfile"
+    done
+}
+
+tailf() {
+    logfile="$(egrep -v '\.(1|gz)' <<< "$1")"
+    tail -f "$logfile"
+}
+
+parse_num() {
+    arg="${1:1}"
+    opt="$2"
+    if [[ "$arg" =~ ^[0-9]+$ ]]; then
+        num="$arg"; sft=1
+    elif [[ "$arg" =~ ^t[0-9]+$ ]]; then
+        num="${arg:1}"; sft=1
+    elif [[ "$arg" == 't' ]] && [ "$opt" ]; then
+        num="$opt"; sft=2
+    else
+        echo "$0: argument must be an integer" >&2
+        exit 1
+    fi
+}
+
+# Args pre-parser
+[[ "$@" ]] || print_help
+if [[ ! "$@" =~ na|ne|ex ]] && \
+    [[ ! "$@" =~ -\h|--help|--version ]]; then
+    echo -n "$0: no log name provided." >&2
+    echo  " See 'log --help' for info." >&2
+    exit 1
+fi
+
+while (( "$#" ))
+do
+    case "$1" in
+        na) logfiles="$(find "$nginx_logs" -type f -name "access*")";
+            shift;;
+        ne) logfiles="$(find "$nginx_logs" -type f -name "error*")";
+            shift;;
+        ex) logfiles="$(find "$exim4_logs" -type f)"
+            shift;;
+        -h|--help) print_help;;
+        --version) echo "log $log_version"; exit 0;;
+        -f|--tailf) [ "$logfiles" ] && tailf "$logfiles";;
+        -t|-t*|-[0-9]*) parse_num "$1" "$2"; shift "$sft";;
+        *) echo "$0: bad argument: $1" >&2; exit 1;;
+    esac
+done
+
+if [ "$num" ]; then
+    print_log "$logfiles" | tail -n "$num"
+else
+    print_log "$logfiles"
+fi
